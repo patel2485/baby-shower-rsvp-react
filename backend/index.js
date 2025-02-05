@@ -30,9 +30,10 @@ app.use(bodyParser.json());
 
 // Google Sheets Setup
 const auth = new google.auth.GoogleAuth({
-  credentials: require(process.env.GOOGLE_SERVICE_ACCOUNT),  // Path to your Google service account JSON file
+  credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),  // Path to your Google service account JSON file
   scopes: 'https://www.googleapis.com/auth/spreadsheets'  // Required scope for accessing Google Sheets
 });
+// credentials: require(process.env.GOOGLE_SERVICE_ACCOUNT),  // Path to your Google service account JSON file
 
 app.post('/submit-rsvp', async (req, res) => {
   const { isAttending, guestNames, guestCount, email, wishes, nonAttendingName } = req.body;
