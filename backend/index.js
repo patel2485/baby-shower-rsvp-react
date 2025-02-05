@@ -13,6 +13,7 @@ const transporter = nodemailer.createTransport({
 const axios = require('axios');
 const fs = require('fs');
 const express = require('express');
+const app = express();
 const { google } = require('googleapis');
 const bodyParser = require('body-parser');
 // const cors = require('cors');
@@ -21,8 +22,6 @@ app.use(cors({
   methods: ['GET', 'POST'],
   credentials: true
 }));
-
-const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
