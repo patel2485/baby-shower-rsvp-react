@@ -24,7 +24,7 @@ app.use(bodyParser.json());
 
 // Google Sheets Setup
 const auth = new google.auth.GoogleAuth({
-  keyFile: process.env.GOOGLE_SERVICE_ACCOUNT,  // Path to your Google service account JSON file
+  credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),  // Path to your Google service account JSON file
   scopes: 'https://www.googleapis.com/auth/spreadsheets'  // Required scope for accessing Google Sheets
 });
 
@@ -126,6 +126,8 @@ app.post('/submit-rsvp', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);  // Log server start
-});
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);  // Log server start
+// });
+
+module.exports = app;  // Export the app for Vercel to handle
