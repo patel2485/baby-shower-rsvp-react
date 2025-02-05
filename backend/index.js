@@ -13,18 +13,19 @@ const transporter = nodemailer.createTransport({
 const axios = require('axios');
 const fs = require('fs');
 const express = require('express');
-const app = express();
 const { google } = require('googleapis');
 const bodyParser = require('body-parser');
-// const cors = require('cors');
+const cors = require('cors');
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
 app.use(cors({
   origin: ['https://avani-baby-shower-rsvp.vercel.app', 'http://localhost:3000'],  // Replace with your actual frontend URL
   methods: ['GET', 'POST'],
   credentials: true
 }));
-const PORT = process.env.PORT || 5000;
 
-app.use(cors());
 app.use(bodyParser.json());
 
 // Google Sheets Setup
