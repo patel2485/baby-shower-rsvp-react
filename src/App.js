@@ -57,7 +57,7 @@ function App() {
       : 'http://localhost:5000/submit-rsvp';  // Locally
   
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch('/api/submit-rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rsvpData),
