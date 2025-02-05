@@ -15,14 +15,8 @@ const fs = require('fs');
 const express = require('express');
 const { google } = require('googleapis');
 const bodyParser = require('body-parser');
-// const cors = require('cors');
-app.use(cors({
-  origin: ['https://avani-baby-shower-rsvp.vercel.app', 'http://localhost:3000'],  // Replace with your actual frontend URL
-  methods: ['GET', 'POST'],
-  credentials: true
-}));
-
-const app = express();
+const cors = require('cors');
+const app = require('./index');  // Import the app from index.js
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
@@ -30,7 +24,7 @@ app.use(bodyParser.json());
 
 // Google Sheets Setup
 const auth = new google.auth.GoogleAuth({
-  credentials: require(process.env.GOOGLE_SERVICE_ACCOUNT),  // Path to your Google service account JSON file
+  keyFile: process.env.GOOGLE_SERVICE_ACCOUNT,  // Path to your Google service account JSON file
   scopes: 'https://www.googleapis.com/auth/spreadsheets'  // Required scope for accessing Google Sheets
 });
 
@@ -53,7 +47,7 @@ app.post('/submit-rsvp', async (req, res) => {
         values: [[
           isAttending ? guestNames[0] : nonAttendingName,  // Full Name
           email,  // Email Address
-          isAttending ? guestCount : 0,  // Number of Guests
+          isAttending ? guestCount : 0,  // Number of Guests (Ensure no leading zeros)
           isAttending ? guestNames.join(', ') : '',  // Guest Names
           wishes,  // Wishes (Only for admin)
           isAttending ? 'Yes' : 'No'  // Attendance status
@@ -61,7 +55,7 @@ app.post('/submit-rsvp', async (req, res) => {
       },
     });
 
-    // Only send confirmation email if attending
+    // Send Confirmation to RSVP Submitter (without wishes and photo)
     if (isAttending) {
       const attendeeMailOptions = {
         from: process.env.GMAIL_USER,  // Sender email address
@@ -69,21 +63,19 @@ app.post('/submit-rsvp', async (req, res) => {
         subject: "🎉 You're Invited! Thank You for Your RSVP! 👶",  // Email subject line
         html: `
           <!-- Main container with background color and padding -->
-          <div style="background-color: #fdf4f5; padding: 20px; border-radius: 10px; font-family: Arial, sans-serif; color: #333; text-align: center; width: 60%; margin: auto;">
+          <div style="background-color: #fdf4f5; padding: 20px; border-radius: 10px; font-family: Arial, sans-serif; color: #333; text-align: center; max-width: 400px; margin: auto;">
             <!-- Thank you header -->
             <h2 style="color: #ff4b77; font-size: 24px; margin-bottom: 10px;">Thank You for RSVPing!</h2>
             <p style="font-size: 16px; color: #555; margin-bottom: 20px;">We’re thrilled to celebrate with you!</p>
 
             <!-- Details box -->
-            <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; margin: 10px auto; text-align: left; display: inline-block; width: 90%; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-              <p style="font-size: 14px; color: #333;">Dear <strong>${guestNames[0]}</strong>,</p>
-              <p style="font-size: 14px; color: #555;">Here are the details of your RSVP:</p>
+            <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; text-align: left; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+              <p style="font-size: 14px; color: #333; margin-bottom: 8px;">Dear <strong>${guestNames[0]}</strong>,</p>
               <ul style="list-style-type: none; padding: 0; font-size: 14px; color: #444;">
                 <li>👶 <strong>Attending:</strong> Yes</li>
                 <li>👥 <strong>Number of Guests:</strong> ${guestCount}</li>
                 <li>🎉 <strong>Guest Names:</strong> ${guestNames.join(', ')}</li>
               </ul>
-              <p style="font-size: 14px; color: #555;">We can’t wait to see you at the baby shower!</p>
             </div>
 
             <!-- Footer with love message -->
@@ -92,7 +84,6 @@ app.post('/submit-rsvp', async (req, res) => {
           </div>
         `,
       };
-
       await transporter.sendMail(attendeeMailOptions);  // Send confirmation email to the attendee
     }
 
@@ -132,14 +123,7 @@ app.post('/submit-rsvp', async (req, res) => {
   }
 });
 
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);  // Log server start
-// });
-
-// module.exports = app;  // Export the app for Vercel to handle
-
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
