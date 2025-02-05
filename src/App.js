@@ -37,27 +37,41 @@ function App() {
   }, []);
 
   // RSVP Logic
-  const handleRsvpSubmit = () => {
+  const handleRsvpSubmit = async () => {
     if (isAttending === null) {
       alert('Please select if you are attending or not.');
       return;
     }
-
-    if (isAttending) {
-      if (email.trim() === '' || guestNames.some(name => name.trim() === '') || wishes.trim() === '') {
-        alert('Please fill out all required fields.');
-        return;
+  
+    const rsvpData = {
+      isAttending,
+      guestCount,  // Add this to send the guest count to the backend
+      guestNames,
+      email,
+      wishes,
+      nonAttendingName  // Add this if you're handling non-attending guests
+    };
+  
+    try {
+      const response = await fetch('http://localhost:5000/submit-rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rsvpData),
+      });
+  
+      if (response.ok) {
+        setRsvpSubmitted(true);
+        setGuestResponse(isAttending ? 'Thanks for your RSVP. See you there!' : "We will miss you.");
+      } else {
+        throw new Error('RSVP submission failed');
       }
-    } else {
-      if (nonAttendingName.trim() === '' || wishes.trim() === '') {
-        alert('Please fill out all required fields.');
-        return;
-      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('There was an issue submitting your RSVP. Please try again later.');
     }
-
-    setRsvpSubmitted(true);
-    setGuestResponse(isAttending ? 'Thanks for your RSVP. See you there!' : "We will miss you.");
   };
+  
+  
 
   const handleGuestCountChange = (count) => {
     setGuestCount(count);
@@ -132,73 +146,75 @@ function App() {
       </section>
 
       {/* RSVP Form Section */}
-      <section id="rsvp-form" className="bg-gradient-to-r from-pink-50 to-blue-50 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-4xl">
-        <h2 className="text-3xl sm:text-4xl font-lobster text-pink-700 text-center mb-4 sm:mb-6">RSVP Form</h2>
+<section id="rsvp-form" className="bg-gradient-to-r from-pink-50 to-blue-50 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-4xl">
+  <h2 className="text-3xl sm:text-4xl font-lobster text-pink-700 text-center mb-4 sm:mb-6">RSVP Form</h2>
 
-        {step === 1 && (
+  {!rsvpSubmitted ? (
+    <div>
+      {step === 1 && (
+        <div className="mb-4">
+          <label className="block text-lg font-medium text-gray-700 mb-2">Will you be attending?</label>
+          <div className="flex space-x-4">
+            <button onClick={() => { setIsAttending(true); setStep(2); }} className="px-4 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105">Yes</button>
+            <button onClick={() => { setIsAttending(false); setStep(2); }} className="px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition-transform transform hover:scale-105">No</button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && isAttending && (
+        <div className="mb-4">
+          <label className="block text-lg font-medium text-gray-700 mb-2">Number of Guests</label>
+          <input type="number" min="1" value={guestCount} onChange={(e) => handleGuestCountChange(Number(e.target.value))} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none mb-4" required />
+          <button onClick={() => {
+            if (guestCount < 1) {
+              alert('Please select at least one guest.');
+            } else {
+              setStep(3);
+            }
+          }} className="w-full py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition-transform transform hover:scale-105">Continue</button>
+        </div>
+      )}
+
+      {step === 3 && isAttending && (
+        <div>
+          {guestNames.map((name, index) => (
+            <div key={index} className="mb-4">
+              <label className="block text-lg font-medium text-gray-700 mb-2">Guest {index + 1} Full Name</label>
+              <input type="text" value={name} onChange={(e) => handleGuestNameChange(index, e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" required />
+            </div>
+          ))}
           <div className="mb-4">
-            <label className="block text-lg font-medium text-gray-700 mb-2">Will you be attending?</label>
-            <div className="flex space-x-4">
-              <button onClick={() => { setIsAttending(true); setStep(2); }} className="px-4 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105">Yes</button>
-              <button onClick={() => { setIsAttending(false); setStep(2); }} className="px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition-transform transform hover:scale-105">No</button>
-            </div>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Primary Email Address</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" required />
           </div>
-        )}
-
-        {step === 2 && isAttending && (
           <div className="mb-4">
-            <label className="block text-lg font-medium text-gray-700 mb-2">Number of Guests</label>
-            <input type="number" min="1" value={guestCount} onChange={(e) => handleGuestCountChange(Number(e.target.value))} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none mb-4" required />
-            <button onClick={() => {
-              if (guestCount < 1) {
-                alert('Please select at least one guest.');
-              } else {
-                setStep(3);
-              }
-            }} className="w-full py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition-transform transform hover:scale-105">Continue</button>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Wishes to Parents-to-Be</label>
+            <textarea value={wishes} onChange={(e) => setWishes(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" rows="4" required></textarea>
           </div>
-        )}
+          <button onClick={handleRsvpSubmit} className="w-full py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition-transform transform hover:scale-105">Submit RSVP</button>
+        </div>
+      )}
 
-        {step === 3 && isAttending && (
-          <div>
-            {guestNames.map((name, index) => (
-              <div key={index} className="mb-4">
-                <label className="block text-lg font-medium text-gray-700 mb-2">Guest {index + 1} Full Name</label>
-                <input type="text" value={name} onChange={(e) => handleGuestNameChange(index, e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" required />
-              </div>
-            ))}
-            <div className="mb-4">
-              <label className="block text-lg font-medium text-gray-700 mb-2">Primary Email Address</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" required />
-            </div>
-            <div className="mb-4">
-              <label className="block text-lg font-medium text-gray-700 mb-2">Wishes to Parents-to-Be</label>
-              <textarea value={wishes} onChange={(e) => setWishes(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" rows="4" required></textarea>
-            </div>
-            <button onClick={handleRsvpSubmit} className="w-full py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition-transform transform hover:scale-105">Submit RSVP</button>
+      {step === 2 && !isAttending && (
+        <div>
+          <div className="mb-4">
+            <label className="block text-lg font-medium text-gray-700 mb-2">Your Full Name</label>
+            <input type="text" value={nonAttendingName} onChange={(e) => setNonAttendingName(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" required />
           </div>
-        )}
-
-        {step === 2 && !isAttending && (
-          <div>
-            <div className="mb-4">
-              <label className="block text-lg font-medium text-gray-700 mb-2">Your Full Name</label>
-              <input type="text" value={nonAttendingName} onChange={(e) => setNonAttendingName(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" required />
-            </div>
-            <div className="mb-4">
-              <label className="block text-lg font-medium text-gray-700 mb-2">Wishes to Parents-to-Be</label>
-              <textarea value={wishes} onChange={(e) => setWishes(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" rows="4" required></textarea>
-            </div>
-            <button onClick={handleRsvpSubmit} className="w-full py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition-transform transform hover:scale-105">Submit RSVP</button>
+          <div className="mb-4">
+            <label className="block text-lg font-medium text-gray-700 mb-2">Wishes to Parents-to-Be</label>
+            <textarea value={wishes} onChange={(e) => setWishes(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none" rows="4" required></textarea>
           </div>
-        )}
-
-        {rsvpSubmitted && (
-          <div className="mt-6 bg-green-100 p-4 rounded-lg text-center text-lg text-green-700">
-            {guestResponse}
-          </div>
-        )}
-      </section>
+          <button onClick={handleRsvpSubmit} className="w-full py-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition-transform transform hover:scale-105">Submit RSVP</button>
+        </div>
+      )}
+    </div>
+  ) : (
+    <div className="mt-6 bg-green-100 p-4 rounded-lg text-center text-lg text-green-700">
+      Thanks for your RSVP. See you there!
+    </div>
+  )}
+</section>
 
     </div>
   );

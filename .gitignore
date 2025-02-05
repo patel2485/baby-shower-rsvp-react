@@ -1,1 +1,8 @@
+# Ignore environment variables
+.env
+
+# Ignore Google service account keys
+backend/JSON/*.json
+
+# Node modules
 node_modules/
