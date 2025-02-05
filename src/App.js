@@ -36,7 +36,6 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // RSVP Logic
   const handleRsvpSubmit = async () => {
     if (isAttending === null) {
       alert('Please select if you are attending or not.');
@@ -45,15 +44,20 @@ function App() {
   
     const rsvpData = {
       isAttending,
-      guestCount,  // Add this to send the guest count to the backend
+      guestCount,
       guestNames,
       email,
       wishes,
-      nonAttendingName  // Add this if you're handling non-attending guests
+      nonAttendingName
     };
   
+    // 🌍 Dynamically set the API URL for both local and Vercel environments
+    const API_URL = process.env.NODE_ENV === 'production' 
+      ? '/api/submit-rsvp'   // On Vercel
+      : 'http://localhost:5000/submit-rsvp';  // Locally
+  
     try {
-      const response = await fetch('http://localhost:5000/submit-rsvp', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rsvpData),
@@ -70,6 +74,7 @@ function App() {
       alert('There was an issue submitting your RSVP. Please try again later.');
     }
   };
+  
   
   
 

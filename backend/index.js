@@ -5,6 +5,8 @@ const express = require('express');
 const { google } = require('googleapis');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,12 +29,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ✅ Google Sheets Authentication
+// ✅ Google Sheets Authentication - Read credentials from JSON file
+const serviceAccountPath = path.join(__dirname, 'JSON/electric-loader-449921-h4-b36ef935b276.json');  // Ensure this path matches your file location
 let serviceAccount;
 try {
-  serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+  serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
 } catch (error) {
-  console.error("❌ Error parsing GOOGLE_SERVICE_ACCOUNT:", error);
+  console.error("❌ Error reading Google Service Account JSON:", error);
 }
 
 const auth = new google.auth.GoogleAuth({
@@ -107,6 +110,11 @@ app.post('/submit-rsvp', async (req, res) => {
     console.error('❌ Error submitting RSVP:', error);
     res.status(500).send({ error: 'Error submitting RSVP', details: error.message });
   }
+});
+
+// Test Route to Check API Availability
+app.get('/api/test', (req, res) => {
+  res.status(200).json({ message: "✅ API is working correctly!" });
 });
 
 // ✅ Export App for Vercel
